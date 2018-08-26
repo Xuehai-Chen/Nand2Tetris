@@ -274,7 +274,6 @@ public class Assembler {
     }
 
     public static void main(String[] args) throws Exception {
-        // write your code here
         Assembler assembler = new Assembler(args[0]);
         Iterator it;
         it = assembler.symbolTable.keySet().iterator();
