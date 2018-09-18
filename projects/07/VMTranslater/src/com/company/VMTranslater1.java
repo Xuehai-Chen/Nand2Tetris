@@ -70,10 +70,10 @@ public class VMTranslater1 {
         BufferedWriter asmFileWriter = new BufferedWriter(new FileWriter(asmFile));
         String line;
         int asmLineNum = 0;
-        asmFileWriter.write("@256");
-        asmFileWriter.write("\nD=A");
-        asmFileWriter.write("\n@R0");
-        asmFileWriter.write("\nM=D");
+//        asmFileWriter.write("@256");
+//        asmFileWriter.write("\nD=A");
+//        asmFileWriter.write("\n@R0");
+//        asmFileWriter.write("\nM=D");
         while ((line = fmtdFileReader.readLine()) != null) {
             String[] commands = line.split(" ");
             if (commandTable.containsKey(commands[0])) {
@@ -86,8 +86,8 @@ public class VMTranslater1 {
                         lineToWrite = "\n@" + i;
                         asmFileWriter.write(lineToWrite);
                         lineToWrite = "\nD=A";
+                        asmFileWriter.write(lineToWrite);
                         if (memorySegmentBaseTable.containsKey(memorySegment)) {
-                            asmFileWriter.write(lineToWrite);
                             lineToWrite = "\n@" + memorySegmentBaseTable.get(memorySegment);
                             asmFileWriter.write(lineToWrite);
                             lineToWrite = "\nA=M+D";
@@ -107,7 +107,6 @@ public class VMTranslater1 {
                         asmFileWriter.write(lineToWrite);
                     } else if (command.equals("pop")) {
                         String lineToWrite;
-                        //TODO
                         lineToWrite = "\n@" + i;
                         asmFileWriter.write(lineToWrite);
                         lineToWrite = "\nD=A";
@@ -116,19 +115,141 @@ public class VMTranslater1 {
                         asmFileWriter.write(lineToWrite);
                         lineToWrite = "\nD=M+D";
                         asmFileWriter.write(lineToWrite);
-                        lineToWrite = "\n@R0";
+                        lineToWrite = "\n@R13";
                         asmFileWriter.write(lineToWrite);
-                        lineToWrite = "\nM=M-1";
-                        asmFileWriter.write(lineToWrite);
-                        lineToWrite = "\nA=M";
+                        lineToWrite = "\nM=D";
                         asmFileWriter.write(lineToWrite);
                         lineToWrite = "\n@R0";
+                        asmFileWriter.write(lineToWrite);
+                        lineToWrite = "\nAM=M-1";
                         asmFileWriter.write(lineToWrite);
                         lineToWrite = "\nD=M";
                         asmFileWriter.write(lineToWrite);
+                        lineToWrite = "\n@R13";
+                        asmFileWriter.write(lineToWrite);
+                        lineToWrite = "\nA=M";
+                        asmFileWriter.write(lineToWrite);
+                        lineToWrite = "\nM=D";
+                        asmFileWriter.write(lineToWrite);
                     }
                 } else if (commands.length == 1) {
-
+                    String lineToWrite;
+                    switch (commands[0]){
+                        case "add":
+                            lineToWrite = "\n@R0";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nAM=M-1";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nD=M";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\n@R0";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nA=M-1";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nM=D+M";
+                            asmFileWriter.write(lineToWrite);
+                            break;
+                        case "sub":
+                            lineToWrite = "\n@R0";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nAM=M-1";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nD=M";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\n@R0";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nA=M-1";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nM=M-D";
+                            asmFileWriter.write(lineToWrite);
+                            break;
+                        case "neg":
+                            lineToWrite = "\n@R0";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nA=M-1";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nM=-M";
+                            asmFileWriter.write(lineToWrite);
+                            break;
+                        case "eq":
+                            lineToWrite = "\n@R0";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nAM=M-1";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nD=M";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\n@R0";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nA=M-1";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nD=M-D";
+                            asmFileWriter.write(lineToWrite);
+                            break;
+                        case "lt":
+                            lineToWrite = "\n@R0";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nAM=M-1";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nD=M";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\n@R0";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nA=M-1";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nD=M-D";
+                            asmFileWriter.write(lineToWrite);
+                            break;
+                        case "gt":
+                            lineToWrite = "\n@R0";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nAM=M-1";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nD=M";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\n@R0";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nA=M-1";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nD=M-D";
+                            asmFileWriter.write(lineToWrite);
+                            break;
+                        case "and":
+                            lineToWrite = "\n@R0";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nAM=M-1";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nD=M";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\n@R0";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nA=M-1";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nD=M&D";
+                            asmFileWriter.write(lineToWrite);
+                            break;
+                        case "or":
+                            lineToWrite = "\n@R0";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nAM=M-1";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nD=M";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\n@R0";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nA=M-1";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nD=M|D";
+                            asmFileWriter.write(lineToWrite);
+                            break;
+                        case "not":
+                            lineToWrite = "\n@R0";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nA=M-1";
+                            asmFileWriter.write(lineToWrite);
+                            lineToWrite = "\nM=!M";
+                            asmFileWriter.write(lineToWrite);
+                            break;
+                    }
                 }
             } else {
                 System.out.println("the command is not defined:" + line);
