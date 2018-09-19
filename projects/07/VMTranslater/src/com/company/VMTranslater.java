@@ -3,12 +3,13 @@ package com.company;
 import java.io.*;
 import java.util.HashMap;
 
-public class VMTranslater1 {
+public class VMTranslater {
 
     private String fileName;
     private File vmFile;
     private File formatedFile;
     private File asmFile;
+    private Integer JUMP_POINT_COUNT = 0;
     private Integer SP = 256;
     private Integer LCL_BASE = 1;
     private Integer ARG_BASE = 2;
@@ -17,7 +18,7 @@ public class VMTranslater1 {
     private HashMap<String, String> commandTable;
     private HashMap<String, String> memorySegmentBaseTable;
 
-    VMTranslater1(String file) throws Exception {
+    VMTranslater(String file) throws Exception {
         fileName = file.split("\\.vm")[0];
         vmFile = new File(file);
         asmFile = new File(fileName + ".asm");
@@ -101,6 +102,7 @@ public class VMTranslater1 {
                         lineToWrite += "@" + i + "\n";
                         lineToWrite += "D=A\n";
                         lineToWrite += "@" + memorySegmentBaseTable.get(memorySegment) + "\n";
+                        //TODO map temp,static,constant,pointer to something else
                         lineToWrite += "D=M+D\n";
                         lineToWrite += "@R13\n";
                         lineToWrite += "M=D\n";
@@ -114,13 +116,12 @@ public class VMTranslater1 {
                     }
                 } else if (commands.length == 1) {
                     String lineToWrite = "";
-                    switch (commands[0]){
+                    switch (commands[0]) {
                         case "add":
                             lineToWrite += "@R0\n";
                             lineToWrite += "AM=M-1\n";
                             lineToWrite += "D=M\n";
-                            lineToWrite += "@R0\n";
-                            lineToWrite += "A=M-1\n";
+                            lineToWrite += "A=A-1\n";
                             lineToWrite += "M=D+M\n";
                             asmFileWriter.write(lineToWrite);
                             break;
@@ -128,8 +129,7 @@ public class VMTranslater1 {
                             lineToWrite += "@R0\n";
                             lineToWrite += "AM=M-1\n";
                             lineToWrite += "D=M\n";
-                            lineToWrite += "@R0\n";
-                            lineToWrite += "A=M-1\n";
+                            lineToWrite += "A=A-1\n";
                             lineToWrite += "M=M-D\n";
                             asmFileWriter.write(lineToWrite);
                             break;
@@ -143,45 +143,82 @@ public class VMTranslater1 {
                             lineToWrite += "@R0\n";
                             lineToWrite += "AM=M-1\n";
                             lineToWrite += "D=M\n";
+                            lineToWrite += "A=A-1\n";
+                            lineToWrite += "D=M-D\n";
+                            lineToWrite += "@JUMP_POINT_" + JUMP_POINT_COUNT + "\n";
+                            lineToWrite += "D;JEQ\n";
                             lineToWrite += "@R0\n";
                             lineToWrite += "A=M-1\n";
-                            lineToWrite += "D=M-D\n";
+                            lineToWrite += "M=0\n";
+                            lineToWrite += "@JUMP_POINT_" + (JUMP_POINT_COUNT + 1) + "\n";
+                            lineToWrite += "0;JMP\n";
+                            lineToWrite += "(JUMP_POINT_" + JUMP_POINT_COUNT + ")\n";
+                            JUMP_POINT_COUNT++;
+                            lineToWrite += "@R0\n";
+                            lineToWrite += "A=M-1\n";
+                            lineToWrite += "M=-1\n";
+                            lineToWrite += "(JUMP_POINT_" + JUMP_POINT_COUNT + ")\n";
+                            JUMP_POINT_COUNT++;
                             asmFileWriter.write(lineToWrite);
                             break;
                         case "lt":
                             lineToWrite += "@R0\n";
                             lineToWrite += "AM=M-1\n";
                             lineToWrite += "D=M\n";
+                            lineToWrite += "A=A-1\n";
+                            lineToWrite += "D=M-D\n";
+                            lineToWrite += "@JUMP_POINT_" + JUMP_POINT_COUNT + "\n";
+                            lineToWrite += "D;JLT\n";
                             lineToWrite += "@R0\n";
                             lineToWrite += "A=M-1\n";
-                            lineToWrite += "D=M-D\n";
+                            lineToWrite += "M=0\n";
+                            lineToWrite += "@JUMP_POINT_" + (JUMP_POINT_COUNT + 1) + "\n";
+                            lineToWrite += "0;JMP\n";
+                            lineToWrite += "(JUMP_POINT_" + JUMP_POINT_COUNT + ")\n";
+                            JUMP_POINT_COUNT++;
+                            lineToWrite += "@R0\n";
+                            lineToWrite += "A=M-1\n";
+                            lineToWrite += "M=-1\n";
+                            lineToWrite += "(JUMP_POINT_" + JUMP_POINT_COUNT + ")\n";
+                            JUMP_POINT_COUNT++;
                             asmFileWriter.write(lineToWrite);
                             break;
                         case "gt":
                             lineToWrite += "@R0\n";
                             lineToWrite += "AM=M-1\n";
                             lineToWrite += "D=M\n";
+                            lineToWrite += "A=A-1\n";
+                            lineToWrite += "D=M-D\n";
+                            lineToWrite += "@JUMP_POINT_" + JUMP_POINT_COUNT + "\n";
+                            lineToWrite += "D;JGT\n";
                             lineToWrite += "@R0\n";
                             lineToWrite += "A=M-1\n";
-                            lineToWrite += "D=M-D\n";
+                            lineToWrite += "M=0\n";
+                            lineToWrite += "@JUMP_POINT_" + (JUMP_POINT_COUNT + 1) + "\n";
+                            lineToWrite += "0;JMP\n";
+                            lineToWrite += "(JUMP_POINT_" + JUMP_POINT_COUNT + ")\n";
+                            JUMP_POINT_COUNT++;
+                            lineToWrite += "@R0\n";
+                            lineToWrite += "A=M-1\n";
+                            lineToWrite += "M=-1\n";
+                            lineToWrite += "(JUMP_POINT_" + JUMP_POINT_COUNT + ")\n";
+                            JUMP_POINT_COUNT++;
                             asmFileWriter.write(lineToWrite);
                             break;
                         case "and":
                             lineToWrite += "@R0\n";
                             lineToWrite += "AM=M-1\n";
                             lineToWrite += "D=M\n";
-                            lineToWrite += "@R0\n";
-                            lineToWrite += "A=M-1\n";
-                            lineToWrite += "D=M&D\n";
+                            lineToWrite += "A=A-1\n";
+                            lineToWrite += "M=D&M\n";
                             asmFileWriter.write(lineToWrite);
                             break;
                         case "or":
                             lineToWrite += "@R0\n";
                             lineToWrite += "AM=M-1\n";
                             lineToWrite += "D=M\n";
-                            lineToWrite += "@R0\n";
-                            lineToWrite += "A=M-1\n";
-                            lineToWrite += "D=M|D\n";
+                            lineToWrite += "A=A-1\n";
+                            lineToWrite += "M=D|M\n";
                             asmFileWriter.write(lineToWrite);
                             break;
                         case "not":
@@ -202,7 +239,7 @@ public class VMTranslater1 {
     }
 
     public static void main(String[] args) throws Exception {
-        VMTranslater1 translater = new VMTranslater1(args[0]);
+        VMTranslater translater = new VMTranslater(args[0]);
         translater.format();
         translater.process();
         translater.formatedFile.delete();
