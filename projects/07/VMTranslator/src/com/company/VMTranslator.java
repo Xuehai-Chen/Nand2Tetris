@@ -94,23 +94,24 @@ public class VMTranslator {
 
     private class CodeWriter {
 
-        private File asmFile;
         private Integer JUMP_POINT_COUNT = 0;
         private BufferedWriter asmFileWriter;
-        private HashMap<String, String> memorySegmentBaseTable;
+        private HashMap<String, String> localMemoryTable;
+        private HashMap<String, String> globalMemoryTable;
 
-        CodeWriter() throws Exception {
-            asmFile = new File("file.asm");
-            memorySegmentBaseTable = new HashMap<>();
-            memorySegmentBaseTable.put("local", "R1");
-            memorySegmentBaseTable.put("argument", "R2");
-            memorySegmentBaseTable.put("this", "R3");
-            memorySegmentBaseTable.put("that", "R4");
-            memorySegmentBaseTable.put("temp", "R5");
+        CodeWriter() {
+            localMemoryTable = new HashMap<>();
+            localMemoryTable.put("local", "LCL");
+            localMemoryTable.put("argument", "ARG");
+            localMemoryTable.put("this", "THIS");
+            localMemoryTable.put("that", "THAT");
+
+            globalMemoryTable = new HashMap<>();
+            globalMemoryTable.put("static", "16");
+            globalMemoryTable.put("temp", "5");
         }
 
         void setFileName(String fileName) throws Exception {
-            asmFile.renameTo(new File(fileName + ".asm"));
             asmFileWriter = new BufferedWriter(new FileWriter(fileName + ".asm"));
         }
 
@@ -234,13 +235,8 @@ public class VMTranslator {
         void writePushPop(CommandType commandType, String segment, int index) throws Exception {
             if (commandType == CommandType.C_PUSH) {
                 String lineToWrite = "";
-                lineToWrite += "@" + index + "\n";
-                lineToWrite += "D=A\n";
-                if (memorySegmentBaseTable.containsKey(segment)) {
-                    lineToWrite += "@" + memorySegmentBaseTable.get(segment) + "\n";
-                    lineToWrite += "A=M+D\n";
-                    lineToWrite += "D=M\n";
-                }
+
+                lineToWrite = getMemorySegmentAddressForPush(lineToWrite, segment, index);
                 lineToWrite += "@SP\n";
                 lineToWrite += "A=M\n";
                 lineToWrite += "M=D\n";
@@ -249,11 +245,7 @@ public class VMTranslator {
                 asmFileWriter.write(lineToWrite);
             } else if (commandType == CommandType.C_POP) {
                 String lineToWrite = "";
-                lineToWrite += "@" + index + "\n";
-                lineToWrite += "D=A\n";
-                lineToWrite += "@" + memorySegmentBaseTable.get(segment) + "\n";
-                //TODO map temp,static,constant,pointer to something else
-                lineToWrite += "D=M+D\n";
+                lineToWrite = getMemorySegmentAddressForPop(lineToWrite, segment, index);
                 lineToWrite += "@R13\n";
                 lineToWrite += "M=D\n";
                 lineToWrite += "@SP\n";
@@ -265,6 +257,62 @@ public class VMTranslator {
                 asmFileWriter.write(lineToWrite);
             }
             asmFileWriter.flush();
+        }
+
+        String getMemorySegmentAddressForPush(String lineToWrite, String segment, int index) throws Exception {
+            if (segment.equals("pointer")) {
+                if(index == 0){
+                    lineToWrite  += "@THIS\n";
+
+                } else if (index == 1) {
+                    lineToWrite += "@THAT\n";
+                } else{
+                    System.err.println("The index for push pointer is not valid!");
+                    return lineToWrite;
+                }
+                lineToWrite  += "D=M\n";
+                return lineToWrite;
+            }
+            lineToWrite += "@" + index + "\n";
+            lineToWrite += "D=A\n";
+            if (segment.equals("constant")) {
+                return lineToWrite;
+            } else if (localMemoryTable.containsKey(segment)) {
+                lineToWrite += "@" + localMemoryTable.get(segment) + "\n";
+                lineToWrite += "A=D+M\n";
+                lineToWrite += "D=M\n";
+            } else if (globalMemoryTable.containsKey(segment)) {
+                lineToWrite += "@" + globalMemoryTable.get(segment) + "\n";
+                lineToWrite += "A=D+A\n";
+                lineToWrite += "D=M\n";
+            }
+            return lineToWrite;
+        }
+
+        String getMemorySegmentAddressForPop(String lineToWrite, String segment, int index) throws Exception {
+            if (segment.equals("pointer")) {
+                if(index == 0){
+                    lineToWrite  += "@THIS\n";
+
+                } else if (index == 1) {
+                    lineToWrite += "@THAT\n";
+                } else{
+                    System.err.println("The index for pop pointer is not valid!");
+                    return lineToWrite;
+                }
+                lineToWrite  += "D=M\n";
+                return lineToWrite;
+            }
+            lineToWrite += "@" + index + "\n";
+            lineToWrite += "D=A\n";
+            if (localMemoryTable.containsKey(segment)) {
+                lineToWrite += "@" + localMemoryTable.get(segment) + "\n";
+                lineToWrite += "D=D+M\n";
+            } else if (globalMemoryTable.containsKey(segment)) {
+                lineToWrite += "@" + globalMemoryTable.get(segment) + "\n";
+                lineToWrite += "D=D+A\n";
+            }
+            return lineToWrite;
         }
 
         void close() throws Exception {
