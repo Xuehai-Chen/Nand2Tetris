@@ -1,5 +1,3 @@
-package com.company;
-
 import java.io.*;
 import java.util.HashMap;
 
@@ -8,7 +6,7 @@ public class VMTranslator {
     private Parser parser;
     private CodeWriter codeWriter;
 
-    VMTranslator(String file) throws Exception {
+    private VMTranslator(String file) throws Exception {
         String fileName = file.split("\\.vm")[0];
         parser = new Parser(file);
         codeWriter = new CodeWriter();
@@ -261,16 +259,16 @@ public class VMTranslator {
 
         String getMemorySegmentAddressForPush(String lineToWrite, String segment, int index) throws Exception {
             if (segment.equals("pointer")) {
-                if(index == 0){
-                    lineToWrite  += "@THIS\n";
+                if (index == 0) {
+                    lineToWrite += "@THIS\n";
 
                 } else if (index == 1) {
                     lineToWrite += "@THAT\n";
-                } else{
+                } else {
                     System.err.println("The index for push pointer is not valid!");
                     return lineToWrite;
                 }
-                lineToWrite  += "D=M\n";
+                lineToWrite += "D=M\n";
                 return lineToWrite;
             }
             lineToWrite += "@" + index + "\n";
@@ -291,16 +289,16 @@ public class VMTranslator {
 
         String getMemorySegmentAddressForPop(String lineToWrite, String segment, int index) throws Exception {
             if (segment.equals("pointer")) {
-                if(index == 0){
-                    lineToWrite  += "@THIS\n";
+                if (index == 0) {
+                    lineToWrite += "@THIS\n";
 
                 } else if (index == 1) {
                     lineToWrite += "@THAT\n";
-                } else{
+                } else {
                     System.err.println("The index for pop pointer is not valid!");
                     return lineToWrite;
                 }
-                lineToWrite  += "D=M\n";
+                lineToWrite += "D=M\n";
                 return lineToWrite;
             }
             lineToWrite += "@" + index + "\n";
