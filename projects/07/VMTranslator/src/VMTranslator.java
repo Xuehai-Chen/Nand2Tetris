@@ -298,7 +298,7 @@ public class VMTranslator {
                     System.err.println("The index for pop pointer is not valid!");
                     return lineToWrite;
                 }
-                lineToWrite += "D=M\n";
+                lineToWrite += "D=A\n";
                 return lineToWrite;
             }
             lineToWrite += "@" + index + "\n";
