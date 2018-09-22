@@ -233,7 +233,6 @@ public class VMTranslator {
         void writePushPop(CommandType commandType, String segment, int index) throws Exception {
             if (commandType == CommandType.C_PUSH) {
                 String lineToWrite = "";
-
                 lineToWrite = getMemorySegmentAddressForPush(lineToWrite, segment, index);
                 lineToWrite += "@SP\n";
                 lineToWrite += "A=M\n";
@@ -261,7 +260,6 @@ public class VMTranslator {
             if (segment.equals("pointer")) {
                 if (index == 0) {
                     lineToWrite += "@THIS\n";
-
                 } else if (index == 1) {
                     lineToWrite += "@THAT\n";
                 } else {
@@ -291,7 +289,6 @@ public class VMTranslator {
             if (segment.equals("pointer")) {
                 if (index == 0) {
                     lineToWrite += "@THIS\n";
-
                 } else if (index == 1) {
                     lineToWrite += "@THAT\n";
                 } else {
@@ -327,7 +324,7 @@ public class VMTranslator {
             } else if (commandType == CommandType.C_PUSH || commandType == CommandType.C_POP) {
                 codeWriter.writePushPop(commandType, parser.arg1(), parser.arg2());
             }
-            System.out.println(commandType);
+            //System.out.println(commandType);
         }
         codeWriter.close();
     }
