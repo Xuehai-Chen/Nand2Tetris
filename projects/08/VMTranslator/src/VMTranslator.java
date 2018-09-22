@@ -29,8 +29,6 @@ public class VMTranslator {
             fileName = path.split(".vm")[0];
         }
         codeWriter = new CodeWriter(fileName);
-        //the bootStrap code should be added except that the test script set ram[0] values manually
-        codeWriter.writeInit();
     }
 
     public enum CommandType {
@@ -62,7 +60,7 @@ public class VMTranslator {
             } else {
                 System.err.println("The command is not valid!");
             }
-            System.out.println(commandType);
+            //System.out.println(commandType);
         }
     }
 
@@ -75,6 +73,7 @@ public class VMTranslator {
                 File file = files.get(i);
                 if (file.getName().equals("Sys.vm")) {
                     codeWriter.setFileName(file.getName().split(".vm")[0]);
+                    codeWriter.writeInit();
                     processSingleFile(new Parser(file));
                     files.remove(file);
                 }
