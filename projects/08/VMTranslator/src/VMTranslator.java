@@ -1,17 +1,36 @@
 import java.io.*;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class VMTranslator {
 
-    private Parser parser;
+    private ArrayList<File> files = new ArrayList<>();
+
     private CodeWriter codeWriter;
 
-    private VMTranslator(String file) throws Exception {
-        String fileName = file.split("\\.vm")[0];
-        parser = new Parser(file);
-        codeWriter = new CodeWriter();
+    private VMTranslator(String path) throws Exception {
+        String fileName = "";
+        File file = new File(path);
+        if (file.isDirectory()) {
+            FilenameFilter filter = new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String name) {
+                    Pattern p = Pattern.compile(".*vm$");
+                    Matcher m = p.matcher(name);
+                    return m.matches();
+                }
+            };
+            files.addAll(Arrays.asList(file.listFiles(filter)));
+            fileName += path + "/" + file.getName();
+        } else {
+            files.add(file);
+            fileName = path.split(".vm")[0];
+        }
+        codeWriter = new CodeWriter(fileName);
+        //the bootStrap code should be added except that the test script set ram[0] values manually
         codeWriter.writeInit();
-        codeWriter.setFileName(fileName);
     }
 
     public enum CommandType {
@@ -20,7 +39,7 @@ public class VMTranslator {
         C_RETURN, C_CALL
     }
 
-    private void process() throws Exception {
+    private void processSingleFile(Parser parser) throws Exception {
         while (parser.hasMoreCammands()) {
             parser.advance();
             CommandType commandType = parser.commandType();
@@ -44,6 +63,27 @@ public class VMTranslator {
                 System.err.println("The command is not valid!");
             }
             System.out.println(commandType);
+        }
+    }
+
+    private void process() throws Exception {
+        if (files.size() == 1) {
+            Parser parser = new Parser(files.get(0));
+            processSingleFile(parser);
+        } else {
+            for (int i = 0; i < files.size(); i++) {
+                File file = files.get(i);
+                if (file.getName().equals("Sys.vm")) {
+                    codeWriter.setFileName(file.getName().split(".vm")[0]);
+                    processSingleFile(new Parser(file));
+                    files.remove(file);
+                }
+            }
+            for (int i = 0; i < files.size(); i++) {
+                File file = files.get(i);
+                codeWriter.setFileName(file.getName().split(".vm")[0]);
+                processSingleFile(new Parser(file));
+            }
         }
         codeWriter.close();
     }

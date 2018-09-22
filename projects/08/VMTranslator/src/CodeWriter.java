@@ -4,29 +4,34 @@ import java.util.HashMap;
 
 class CodeWriter {
 
+    private String vmFileName;
     private Integer JUMP_POINT_COUNT = 0;
+    private Integer RETURN_ADDRESS_COUNT = 0;
     private BufferedWriter asmFileWriter;
     private HashMap<String, String> localMemoryTable;
-    private HashMap<String, String> globalMemoryTable;
 
-    CodeWriter() {
+    CodeWriter(String asmFileName) throws Exception {
+        asmFileWriter = new BufferedWriter(new FileWriter(asmFileName + ".asm"));
         localMemoryTable = new HashMap<>();
         localMemoryTable.put("local", "LCL");
         localMemoryTable.put("argument", "ARG");
         localMemoryTable.put("this", "THIS");
         localMemoryTable.put("that", "THAT");
-
-        globalMemoryTable = new HashMap<>();
-        globalMemoryTable.put("static", "16");
-        globalMemoryTable.put("temp", "5");
     }
 
-    void setFileName(String fileName) throws Exception {
-        asmFileWriter = new BufferedWriter(new FileWriter(fileName + ".asm"));
+    void writeInit() throws Exception {
+        String lineToWrite = "";
+        lineToWrite += "@256\n";
+        lineToWrite += "D=A\n";
+        lineToWrite += "@SP\n";
+        lineToWrite += "M=D\n";
+        asmFileWriter.write(lineToWrite);
+        asmFileWriter.flush();
+        writeCall("Sys.init", 0);
     }
 
-    void writeInit() {
-
+    void setFileName(String vmFileName) {
+        this.vmFileName = vmFileName;
     }
 
     void writeArithmetic(String command) throws Exception {
@@ -184,6 +189,10 @@ class CodeWriter {
             }
             lineToWrite += "D=M\n";
             return lineToWrite;
+        } else if (segment.equals("static")) {
+            lineToWrite += "@" + vmFileName + "." + index + "\n";
+            lineToWrite += "D=M\n";
+            return lineToWrite;
         }
         lineToWrite += "@" + index + "\n";
         lineToWrite += "D=A\n";
@@ -193,8 +202,8 @@ class CodeWriter {
             lineToWrite += "@" + localMemoryTable.get(segment) + "\n";
             lineToWrite += "A=D+M\n";
             lineToWrite += "D=M\n";
-        } else if (globalMemoryTable.containsKey(segment)) {
-            lineToWrite += "@" + globalMemoryTable.get(segment) + "\n";
+        } else if (segment.equals("temp")) {
+            lineToWrite += "@5\n";
             lineToWrite += "A=D+A\n";
             lineToWrite += "D=M\n";
         }
@@ -213,14 +222,18 @@ class CodeWriter {
             }
             lineToWrite += "D=A\n";
             return lineToWrite;
+        } else if (segment.equals("static")) {
+            lineToWrite += "@" + vmFileName + "." + index + "\n";
+            lineToWrite += "D=A\n";
+            return lineToWrite;
         }
         lineToWrite += "@" + index + "\n";
         lineToWrite += "D=A\n";
         if (localMemoryTable.containsKey(segment)) {
             lineToWrite += "@" + localMemoryTable.get(segment) + "\n";
             lineToWrite += "D=D+M\n";
-        } else if (globalMemoryTable.containsKey(segment)) {
-            lineToWrite += "@" + globalMemoryTable.get(segment) + "\n";
+        } else if (segment.equals("temp")) {
+            lineToWrite += "@5\n";
             lineToWrite += "D=D+A\n";
         }
         return lineToWrite;
@@ -235,7 +248,7 @@ class CodeWriter {
 
     void writeGoto(String label) throws Exception {
         String lineToWrite = "";
-        lineToWrite += "@"+ label + "\n";
+        lineToWrite += "@" + label + "\n";
         lineToWrite += "0;JMP\n";
         asmFileWriter.write(lineToWrite);
         asmFileWriter.flush();
@@ -246,7 +259,7 @@ class CodeWriter {
         lineToWrite += "@SP\n";
         lineToWrite += "AM=M-1\n";
         lineToWrite += "D=M\n";
-        lineToWrite += "@"+label+"\n";
+        lineToWrite += "@" + label + "\n";
         lineToWrite += "D;JNE\n";
         asmFileWriter.write(lineToWrite);
         asmFileWriter.flush();
@@ -254,42 +267,111 @@ class CodeWriter {
 
     void writeCall(String functionName, int numArgs) throws Exception {
         String lineToWrite = "";
-        lineToWrite += "@R13\n";
-        lineToWrite += "M=D\n";
+        //PUSH returnAddress,LCL,ARG,THIS,THAT
+        lineToWrite = pushRegister(lineToWrite, "returnAddress");
+        lineToWrite = pushRegister(lineToWrite, "LCL");
+        lineToWrite = pushRegister(lineToWrite, "ARG");
+        lineToWrite = pushRegister(lineToWrite, "THIS");
+        lineToWrite = pushRegister(lineToWrite, "THAT");
+        //ARG=SP-5-numArgs
+        lineToWrite += "@5\n";
+        lineToWrite += "D=A\n";
         lineToWrite += "@SP\n";
-        lineToWrite += "AM=M-1\n";
-        lineToWrite += "D=M\n";
-        lineToWrite += "@R13\n";
-        lineToWrite += "A=M\n";
+        lineToWrite += "D=M-D\n";
+        lineToWrite += "@" + numArgs + "\n";
+        lineToWrite += "D=D-A\n";
+        lineToWrite += "@ARG\n";
         lineToWrite += "M=D\n";
+        //LCL=SP
+        lineToWrite += "@SP\n";
+        lineToWrite += "D=M\n";
+        lineToWrite += "@LCL\n";
+        lineToWrite += "M=D\n";
+        //goto functionName
+        lineToWrite += "@" + functionName + "\n";
+        lineToWrite += "0;JMP\n";
+        //set returnAddress;
+        lineToWrite += "(RETURN_ADDRESS_" + RETURN_ADDRESS_COUNT + ")\n";
+        RETURN_ADDRESS_COUNT++;
         asmFileWriter.write(lineToWrite);
         asmFileWriter.flush();
+    }
+
+    private String pushRegister(String lineToWrite, String registerName) {
+        if (registerName.equals("returnAddress")) {
+            lineToWrite += "@RETURN_ADDRESS_" + RETURN_ADDRESS_COUNT + "\n";
+            lineToWrite += "D=A\n";
+        } else {
+            lineToWrite += "@" + registerName + "\n";
+            lineToWrite += "D=M\n";
+        }
+        lineToWrite += "@SP\n";
+        lineToWrite += "A=M\n";
+        lineToWrite += "M=D\n";
+        lineToWrite += "@SP\n";
+        lineToWrite += "M=M+1\n";
+        return lineToWrite;
     }
 
     void writeReturn() throws Exception {
         String lineToWrite = "";
+        // endFrame = LCL
+        lineToWrite += "@LCL\n";
+        lineToWrite += "D=M\n";
         lineToWrite += "@R13\n";
         lineToWrite += "M=D\n";
+        //returnAddress = *(endFrame -5)
+        lineToWrite += "@5\n";
+        lineToWrite += "A=D-A\n";
+        lineToWrite += "D=M\n";
+        lineToWrite += "@R14\n";
+        lineToWrite += "M=D\n";
+        //*ARG=pop()
         lineToWrite += "@SP\n";
         lineToWrite += "AM=M-1\n";
         lineToWrite += "D=M\n";
-        lineToWrite += "@R13\n";
+        lineToWrite += "@ARG\n";
         lineToWrite += "A=M\n";
         lineToWrite += "M=D\n";
+        //SP=ARG+1
+        lineToWrite += "@ARG\n";
+        lineToWrite += "D=M+1\n";
+        lineToWrite += "@SP\n";
+        lineToWrite += "M=D\n";
+        //recover registers
+        lineToWrite = popRegister(lineToWrite, "THAT", 1);
+        lineToWrite = popRegister(lineToWrite, "THIS", 2);
+        lineToWrite = popRegister(lineToWrite, "ARG", 3);
+        lineToWrite = popRegister(lineToWrite, "LCL", 4);
+        //goto returnAddress
+        lineToWrite += "@R14\n";
+        lineToWrite += "A=M\n";
+        lineToWrite += "0;JMP\n";
         asmFileWriter.write(lineToWrite);
         asmFileWriter.flush();
     }
 
+    private String popRegister(String lineToWrite, String registerName, int index) {
+        lineToWrite += "@R13\n";
+        lineToWrite += "D=M\n";
+        lineToWrite += "@" + index + "\n";
+        lineToWrite += "A=D-A\n";
+        lineToWrite += "D=M\n";
+        lineToWrite += "@" + registerName + "\n";
+        lineToWrite += "M=D\n";
+        return lineToWrite;
+    }
+
     void writeFunction(String functionName, int numLocals) throws Exception {
         String lineToWrite = "";
-        lineToWrite += "@R13\n";
-        lineToWrite += "M=D\n";
-        lineToWrite += "@SP\n";
-        lineToWrite += "AM=M-1\n";
-        lineToWrite += "D=M\n";
-        lineToWrite += "@R13\n";
-        lineToWrite += "A=M\n";
-        lineToWrite += "M=D\n";
+        lineToWrite += "(" + functionName + ")\n";
+        for (int i = 0; i < numLocals; i++) {
+            lineToWrite += "@SP\n";
+            lineToWrite += "A=M\n";
+            lineToWrite += "M=0\n";
+            lineToWrite += "@SP\n";
+            lineToWrite += "M=M+1\n";
+        }
         asmFileWriter.write(lineToWrite);
         asmFileWriter.flush();
     }

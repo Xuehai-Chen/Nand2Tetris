@@ -8,9 +8,8 @@ class Parser {
     private BufferedReader vmFileReader;
 
 
-    Parser(String file) throws Exception {
-        File vmFile = new File(file);
-        vmFileReader = new BufferedReader(new FileReader(vmFile));
+    Parser(File file) throws Exception {
+        vmFileReader = new BufferedReader(new FileReader(file));
     }
 
     boolean hasMoreCammands() throws Exception {
