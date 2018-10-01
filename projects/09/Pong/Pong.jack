@@ -1,0 +1,75 @@
+class Pong{
+	field Ball ball;
+	field Racket racket;
+	field int direction;
+	field int score;
+	constructor Pong new(){
+		let ball = Ball.new(0,14,1);
+		let racket = Racket.new(0,50);
+		let direction = 0;
+		do ball.move();
+		let score = 0;
+		return this;
+	}
+
+	method void dispose(){
+		do ball.dispose();
+		do racket.dispose();
+		return;
+	}
+
+	method void moveRacket(){
+		if (direction = 1) { do racket.moveLeft();}
+		if (direction = 2) { do racket.moveRight();}
+		return;
+	}
+
+	method boolean checkGameOver(){
+		var int ballY;
+		var int ballX;
+		var int racketStart;
+		var int racketEnd;
+		let ballY = ball.getY();
+		if(ballY > 250){
+			let racketStart = racket.getStart();
+			let racketEnd = racketStart + racket.getLength();
+			let ballX = ball.getX();
+			if((ballX < racketStart) | (ballX > racketEnd)){
+				do Output.moveCursor(0,26);
+				do Output.printString("GAME OVER!");
+				return true;
+			}
+			let score = score + 1;
+			do ball.setDirection(ball.getDirection() + 1);
+		}
+		return false;
+	}
+
+
+	method void run() {
+		var char key;
+		var boolean exit;
+		let exit = false;
+
+		do Output.printString("score:");
+		do Screen.setColor(true);
+		do Screen.drawRectangle(0,12,511,13);
+		while(~exit) {
+			if(checkGameOver()){
+				return;
+			}
+			if( key = 81) { let exit = true;}
+			if( key = 130) { let direction = 1;}
+			if( key = 132) { let direction = 2;}
+			let key = Keyboard.keyPressed();
+			if(~(key = 0)){
+				do moveRacket();
+			}
+			do ball.move();
+			do Sys.wait(10);
+			do Output.moveCursor(0,6);
+			do Output.printInt(score);
+		}
+		return;
+	}
+}

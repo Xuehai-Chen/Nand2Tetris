@@ -1,0 +1,55 @@
+class Racket {
+	field int start,length;
+
+	constructor Racket new(int Astart, int Alength){
+		let start = Astart;
+		let length = Alength;
+		do draw();
+		return this;
+	}
+
+	method void draw(){
+		do Screen.setColor(true);
+		do Screen.drawRectangle(start,253,start + length,255);
+		return;
+	}
+
+	method void erase(){
+		do Screen.setColor(false);
+		do Screen.drawRectangle(start,253,start + length,255);
+		return;
+	}
+
+	method void moveLeft(){
+		if(start > 0){
+			do erase();
+			let start = start - 2;
+			do draw();
+		}
+		return;
+	}
+
+	method void moveRight(){
+		var int end;
+		let end = start + length;
+		if( end < 509){
+			do erase();
+			let start = start + 2;
+			do draw();
+		}
+		return;
+	}
+
+	method int getStart(){
+		return start;
+	}
+
+	method int getLength(){
+		return length;
+	}
+
+	method void dispose(){
+		do Memory.deAlloc(this);
+		return;
+	}
+}

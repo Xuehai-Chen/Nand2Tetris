@@ -1,0 +1,71 @@
+class Ball {
+	field int direction;
+	field int x,y;
+
+	constructor Ball new( int Ax, int Ay, int Adirection) {
+		let x = Ax + 1;
+		let y = Ay + 1;
+		let direction = Adirection;
+		do draw();
+		return this;
+	}
+
+	method void dispose() {
+		do Memory.deAlloc(this);
+		return;
+	}
+
+	method void draw() {
+		do Screen.setColor(true);
+		do Screen.drawRectangle(x - 1, y - 1, x + 1, y + 1);
+		return;
+	}
+	
+	method void erase(){
+		do Screen.setColor(false);
+		do Screen.drawRectangle(x - 1,y - 1, x + 1, y + 1);
+		return;
+	}
+
+	method int getX(){
+		return x;
+	}
+
+	method int getY(){
+		return y;
+	}
+
+	method int getDirection(){
+		return direction;
+	}
+
+	method void setDirection(int Adirection){
+		let direction = Adirection;
+		return;
+	}
+
+	method void move(){
+		do erase();
+		if( direction = 1) { 
+			let x = x + 1;
+			let y = y + 1;
+		}
+		if( direction = 2) {
+			let x = x + 1;
+			let y = y - 1;
+		}
+		if( direction = 3) {
+			let x = x - 1;
+			let y = y + 1;
+		}
+		if( direction = 4) {
+			let x = x - 1;
+			let y = y - 1;
+		}
+		if( x < 2 ) { let direction = direction - 2; }
+		if( x > 509 ) { let direction = direction + 2; }
+		if( y < 16 ) { let direction = direction - 1; }
+		do draw();
+		return;
+	}
+}
