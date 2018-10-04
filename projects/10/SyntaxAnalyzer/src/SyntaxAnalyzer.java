@@ -2,7 +2,7 @@ public class SyntaxAnalyzer {
     private Tokenizer tokenizer;
     private Parser parser;
 
-    public SyntaxAnalyzer(String fileName) {
+    public SyntaxAnalyzer(String fileName) throws Exception {
         tokenizer = new Tokenizer(fileName);
         parser = new Parser(fileName, fileName);
     }
@@ -11,7 +11,7 @@ public class SyntaxAnalyzer {
         parser.compileClass();
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         SyntaxAnalyzer syntaxAnalyzer = new SyntaxAnalyzer(args[0]);
         syntaxAnalyzer.process();
     }
