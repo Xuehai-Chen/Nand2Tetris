@@ -1,14 +1,17 @@
 public class SyntaxAnalyzer {
+    private String fileName;
     private Tokenizer tokenizer;
-    private Parser parser;
+    private CompilationEngine compilationEngine;
 
     public SyntaxAnalyzer(String fileName) throws Exception {
+        this.fileName = fileName;
         tokenizer = new Tokenizer(fileName);
-        parser = new Parser(fileName, fileName);
+        compilationEngine = new CompilationEngine(tokenizer,fileName);
     }
 
-    public void process() {
-        parser.compileClass();
+    public void process() throws Exception {
+        compilationEngine.compileClass();
+        compilationEngine.transform(fileName.substring(fileName.lastIndexOf('/') + 1).split(".jack")[0] + ".xml");
     }
 
     public static void main(String[] args) throws Exception {

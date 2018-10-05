@@ -19,11 +19,6 @@ public class Tokenizer {
         KEYWORD, SYMBOL, IDENTIFIER, INT_CONST, STRING_CONST
     }
 
-    public enum KeyWord {
-        CLASS, METHOD, FUNCTION, CONSTRUCTOR, INT, BOOLEAN, CHAR, VOID, VAR, STATIC,
-        FIELD, LET, DO, IF, ELSE, WHILE, RETURN, TRUE, FALSE, NULL, THIS
-    }
-
     private HashSet<String> keyWordSet;
     private HashSet<Character> symbolSet;
 
@@ -171,24 +166,31 @@ public class Tokenizer {
         return currentType;
     }
 
-    public String keyWord() {
+    public String getToken() {
         return currentToken;
     }
 
-    public char symbol() {
-        return currentToken.charAt(0);
-    }
+    public static String getTag(Tokenizer tokenizer) {
+        TokenType tokenType = tokenizer.tokenType();
+        String tag;
+        switch (tokenType) {
+            case KEYWORD:
+                tag = "keyword";
+                break;
+            case SYMBOL:
+                tag = "symbol";
 
-    public String identifier() {
-        return currentToken;
-    }
-
-    public int intVal() {
-        return Integer.parseInt(currentToken);
-    }
-
-    public String stringVal() {
-        return currentToken;
+                break;
+            case IDENTIFIER:
+                tag = "identifier";
+                break;
+            case STRING_CONST:
+                tag = "stringConstant";
+                break;
+            default:
+                tag = "integerConstant";
+        }
+        return tag;
     }
 
     public static void main(String[] args) throws Exception {
@@ -201,30 +203,8 @@ public class Tokenizer {
         int i = 0;
         while (tokenizer.hasMoreTokens()) {
             tokenizer.advance();
-            String tag = "";
-            String value = "";
-            TokenType tokenType = tokenizer.tokenType();
-            switch (tokenType) {
-                case KEYWORD:
-                    tag = "keyword";
-                    value = tokenizer.keyWord();
-                    break;
-                case SYMBOL:
-                    tag = "symbol";
-                    value = Character.toString(tokenizer.symbol());
-                    break;
-                case IDENTIFIER:
-                    tag = "identifier";
-                    value = tokenizer.identifier();
-                    break;
-                case STRING_CONST:
-                    tag = "stringConstant";
-                    value = tokenizer.stringVal();
-                    break;
-                default:
-                    tag = "integerConstant";
-                    value = Integer.toString(tokenizer.intVal());
-            }
+            String tag = Tokenizer.getTag(tokenizer);
+            String value = tokenizer.getToken();
             Element element = doc.createElement(tag);
             element.appendChild(doc.createTextNode(value));
             rootElement.appendChild(element);
