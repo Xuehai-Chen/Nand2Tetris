@@ -5,11 +5,11 @@ import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class SyntaxAnalyzer {
+public class JackAnalyzer {
     private String path;
     private ArrayList<File> files = new ArrayList<>();
 
-    public SyntaxAnalyzer(String path) throws Exception {
+    public JackAnalyzer(String path) throws Exception {
         File file = new File(path);
         if (file.isDirectory()) {
             FilenameFilter filter = new FilenameFilter() {
@@ -34,12 +34,12 @@ public class SyntaxAnalyzer {
             Tokenizer tokenizer = new Tokenizer(path + fileName);
             CompilationEngine compilationEngine = new CompilationEngine(tokenizer);
             compilationEngine.compileClass();
-            compilationEngine.transform(fileName.split(".jack")[0] + ".xml");
+            compilationEngine.transform(path + fileName.split(".jack")[0] + ".xml");
         }
     }
 
     public static void main(String[] args) throws Exception {
-        SyntaxAnalyzer syntaxAnalyzer = new SyntaxAnalyzer(args[0]);
-        syntaxAnalyzer.process();
+        JackAnalyzer jackAnalyzer = new JackAnalyzer(args[0]);
+        jackAnalyzer.process();
     }
 }
