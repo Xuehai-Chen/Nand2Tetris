@@ -12,7 +12,7 @@ public class CompilationEngine {
     private Document doc;
     private Element rootElement;
 
-    public CompilationEngine(Tokenizer tokenizer, String output) throws Exception {
+    public CompilationEngine(Tokenizer tokenizer) throws Exception {
         this.tokenizer = tokenizer;
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
