@@ -88,7 +88,7 @@ public class CompilationEngine {
     }
 
     public void compileParameterList() throws Exception {
-        symbolTable.define("this", null, "argument");
+        //symbolTable.define(className, className, "argument");
         if (tokenizer.getToken().equals("int") || tokenizer.getToken().equals("boolean") || tokenizer.getToken().equals("char") || tokenizer.tokenType() == Tokenizer.TokenType.IDENTIFIER) {
             String type = "";
             String name = "";
@@ -188,15 +188,16 @@ public class CompilationEngine {
         eat("keyword");
         eat("symbol");
         compileExpression();
-        codeWriter.writeArithmetic("neg");
-        codeWriter.writeIf(labelCount);
+        codeWriter.writeArithmetic("not");
+        int localLabelCount = labelCount;
+        codeWriter.writeIf(localLabelCount);
+        labelCount++;
         eat("symbol");
         eat("symbol");
         compileStatements(false);
         eat("symbol");
-        codeWriter.writeGoto(labelCount - 1);
-        codeWriter.writeLabel(labelCount);
-        labelCount++;
+        codeWriter.writeGoto(localLabelCount - 1);
+        codeWriter.writeLabel(localLabelCount);
     }
 
     public void compileReturn() throws Exception {
@@ -212,23 +213,25 @@ public class CompilationEngine {
         eat("keyword");
         eat("symbol");
         compileExpression();
-        codeWriter.writeArithmetic("neg");
+        codeWriter.writeArithmetic("not");
+        int localLabelCount = labelCount;
         codeWriter.writeIf(labelCount);
+        labelCount++;
         eat("symbol");
         eat("symbol");
         compileStatements(false);
         eat("symbol");
         if (tokenizer.tokenType() == Tokenizer.TokenType.KEYWORD && tokenizer.getToken().equals("else")) {
             codeWriter.writeGoto(labelCount + 1);
-            codeWriter.writeLabel(labelCount);
+            codeWriter.writeLabel(localLabelCount);
             labelCount++;
+            localLabelCount = labelCount;
             eat("keyword");
             eat("symbol");
             compileStatements(false);
             eat("symbol");
         }
-        codeWriter.writeLabel(labelCount);
-        labelCount++;
+        codeWriter.writeLabel(localLabelCount);
     }
 
     public void compileExpression() throws Exception {
@@ -261,7 +264,7 @@ public class CompilationEngine {
         } else if (tokenizer.tokenType() == Tokenizer.TokenType.SYMBOL && (tokenizer.getToken().equals("-") || tokenizer.getToken().equals("~"))) {
             String command = eat("symbol");
             compileTerm();
-            codeWriter.writeArithmetic(arithmeticSymbolMap.get(command));
+            codeWriter.writeArithmetic(command.equals("-") ? "neg" : "not");
         } else if (tokenizer.tokenType() == Tokenizer.TokenType.IDENTIFIER) {
             String name = "";
             name = eat("identifier");
@@ -271,6 +274,9 @@ public class CompilationEngine {
                 eat("symbol");
             } else if (tokenizer.tokenType() == Tokenizer.TokenType.SYMBOL && (tokenizer.getToken().equals(".") || tokenizer.getToken().equals("("))) {
                 if (tokenizer.getToken().equals(".")) {
+                    if (!symbolTable.kindOf(name).equals("undefined")) {
+                        codeWriter.writePush(symbolTable.kindOf(name), symbolTable.indexOf(name));
+                    }
                     name += eat("symbol");
                     name += eat("identifier");
                 }
