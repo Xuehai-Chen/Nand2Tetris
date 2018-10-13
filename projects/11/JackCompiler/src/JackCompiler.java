@@ -32,9 +32,8 @@ public class JackCompiler {
         for (File singleFile : files) {
             String fileName = singleFile.getName();
             Tokenizer tokenizer = new Tokenizer(path + fileName);
-            CompilationEngine compilationEngine = new CompilationEngine(tokenizer);
+            CompilationEngine compilationEngine = new CompilationEngine(tokenizer,new CodeWriter(path + fileName.split(".jack")[0]));
             compilationEngine.compileClass();
-            compilationEngine.transform(path + fileName.split(".jack")[0] + ".xml");
         }
     }
 

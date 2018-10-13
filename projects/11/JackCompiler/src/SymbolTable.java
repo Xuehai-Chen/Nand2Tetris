@@ -24,21 +24,21 @@ public class SymbolTable {
         varCount = 0;
     }
 
-    public void define(String name, String type, IdentifierKind kind) {
-        if (kind == IdentifierKind.STATIC) {
+    public void define(String name, String type, String kind) {
+        if (kind.equals("static")) {
             Object[] entity = {type, kind, staticCount};
             classSymbolTable.put(name, entity);
             staticCount++;
-        } else if (kind == IdentifierKind.FIELD) {
+        } else if (kind.equals("field")) {
             Object[] entity = {type, kind, fieldCount};
             classSymbolTable.put(name, entity);
             fieldCount++;
-        } else if (kind == IdentifierKind.ARG) {
+        } else if (kind.equals("argument")) {
             Object[] entity = {type, kind, argCount};
             subroutineSymbolTable.put(name, entity);
             argCount++;
-        } else if (kind == IdentifierKind.VAR) {
-            Object[] entity = {type, kind, varCount};
+        } else if (kind.equals("var")) {
+            Object[] entity = {type, "local", varCount};
             subroutineSymbolTable.put(name, entity);
             varCount++;
         } else {
@@ -46,29 +46,29 @@ public class SymbolTable {
         }
     }
 
-    public int varCount(IdentifierKind kind) {
+    public int varCount(String kind) {
         switch (kind) {
-            case STATIC:
+            case "static":
                 return staticCount;
-            case FIELD:
+            case "field":
                 return fieldCount;
-            case ARG:
+            case "arg":
                 return argCount;
-            case VAR:
+            case "var":
                 return varCount;
             default:
                 return 0;
         }
     }
 
-    public IdentifierKind kindOf(String name) {
+    public String kindOf(String name) {
         if (subroutineSymbolTable.containsKey(name)) {
-            return (IdentifierKind) subroutineSymbolTable.get(name)[1];
+            return (String) subroutineSymbolTable.get(name)[1];
         } else if (classSymbolTable.containsKey(name)) {
-            return (IdentifierKind) classSymbolTable.get(name)[1];
+            return (String) classSymbolTable.get(name)[1];
         }
         System.out.println("The identifier is undefined.");
-        return IdentifierKind.UNDEFINED;
+        return "undefined";
     }
 
     public String typeOf(String name) {
