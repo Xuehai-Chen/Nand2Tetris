@@ -125,9 +125,12 @@ public class Tokenizer {
         while (true) {
             s.append(currentChar);
             if (keyWordSet.contains(s.toString())) {
-                currentToken = s.toString();
-                currentType = TokenType.KEYWORD;
-                return;
+                Character c = currentLine.charAt(lineIndex + 1);
+                if (symbolSet.contains(c) || c.equals(' ')) {
+                    currentToken = s.toString();
+                    currentType = TokenType.KEYWORD;
+                    return;
+                }
             }
             if (symbolSet.contains(currentChar) || currentChar.equals(' ')) {
                 lineIndex--;

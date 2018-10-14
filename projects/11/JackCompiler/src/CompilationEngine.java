@@ -62,17 +62,13 @@ public class CompilationEngine {
         symbolTable.startSubroutine();
         String subroutineType = eat("keyword");
         if (subroutineType.equals("method")) {
-            codeWriter.writePush("argument", 0);
-            codeWriter.writePop("pointer", 0);
-        } else if (subroutineType.equals("constructor")) {
-            codeWriter.writePush("constant", symbolTable.varCount("field") + symbolTable.varCount("static"));
-            codeWriter.writeCall("Memory.alloc", 1);
+            symbolTable.define("this", className, "argument");
         }
-        boolean isVoid = false;
+        String returnType = "";
         if (tokenizer.tokenType() == Tokenizer.TokenType.KEYWORD) {
-            isVoid = eat("keyword").equals("void");
+            returnType = eat("keyword");
         } else if (tokenizer.tokenType() == Tokenizer.TokenType.IDENTIFIER) {
-            eat("identifier");
+            returnType = eat("identifier");
         }
         String name = eat("identifier");
         eat("symbol");
@@ -83,12 +79,20 @@ public class CompilationEngine {
             compileVarDec();
         }
         codeWriter.writeFunction(className + "." + name, symbolTable.varCount("var"));
-        compileStatements(isVoid);
+        if (subroutineType.equals("method")) {
+            codeWriter.writePush("argument", 0);
+            codeWriter.writePop("pointer", 0);
+        } else if (subroutineType.equals("constructor")) {
+            returnType = "this";
+            codeWriter.writePush("constant", symbolTable.varCount("field"));
+            codeWriter.writeCall("Memory.alloc", 1);
+            codeWriter.writePop("pointer", 0);
+        }
+        compileStatements(returnType);
         eat("symbol");
     }
 
     public void compileParameterList() throws Exception {
-        //symbolTable.define(className, className, "argument");
         if (tokenizer.getToken().equals("int") || tokenizer.getToken().equals("boolean") || tokenizer.getToken().equals("char") || tokenizer.tokenType() == Tokenizer.TokenType.IDENTIFIER) {
             String type = "";
             String name = "";
@@ -131,7 +135,7 @@ public class CompilationEngine {
         eat("symbol");
     }
 
-    public void compileStatements(boolean isVoid) throws Exception {
+    public void compileStatements(String type) throws Exception {
         while (true) {
             if (tokenizer.getToken().equals("let")) {
                 compileLet();
@@ -142,8 +146,10 @@ public class CompilationEngine {
             } else if (tokenizer.getToken().equals("do")) {
                 compileDo();
             } else if (tokenizer.getToken().equals("return")) {
-                if (isVoid) {
+                if (type.equals("void")) {
                     codeWriter.writePush("constant", 0);
+                } else if (type.equals("this")) {
+                    //codeWriter.writePush("pointer", 0);
                 }
                 compileReturn();
             } else {
@@ -155,12 +161,22 @@ public class CompilationEngine {
     public void compileDo() throws Exception {
         eat("keyword");
         String funcName = eat("identifier");
+        int count = 0;
         if (tokenizer.tokenType() == Tokenizer.TokenType.SYMBOL && tokenizer.getToken().equals(".")) {
+            if (!symbolTable.kindOf(funcName).equals("undefined")) {
+                codeWriter.writePush(symbolTable.kindOf(funcName), symbolTable.indexOf(funcName));
+                funcName = symbolTable.typeOf(funcName);
+                count++;
+            }
             funcName += eat("symbol");
             funcName += eat("identifier");
+        } else {
+            funcName = className + "." + funcName;
+            codeWriter.writePush("pointer", 0);
+            count++;
         }
         eat("symbol");
-        int count = compileExpressionList();
+        count += compileExpressionList();
         eat("symbol");
         eat("symbol");
         codeWriter.writeCall(funcName, count);
@@ -171,10 +187,19 @@ public class CompilationEngine {
         eat("keyword");
         String variable = eat("identifier");
         if (tokenizer.tokenType() == Tokenizer.TokenType.SYMBOL && tokenizer.getToken().equals("[")) {
+            codeWriter.writePush(symbolTable.kindOf(variable), symbolTable.indexOf(variable));
             eat("symbol");
             compileExpression();
             eat("symbol");
-            //TODO
+            codeWriter.writeArithmetic("add");
+            eat("symbol");
+            compileExpression();
+            eat("symbol");
+            codeWriter.writePop("temp", 0);
+            codeWriter.writePop("pointer", 1);
+            codeWriter.writePush("temp", 0);
+            codeWriter.writePop("that", 0);
+            return;
         }
         eat("symbol");
         compileExpression();
@@ -194,7 +219,7 @@ public class CompilationEngine {
         labelCount++;
         eat("symbol");
         eat("symbol");
-        compileStatements(false);
+        compileStatements("normal");
         eat("symbol");
         codeWriter.writeGoto(localLabelCount - 1);
         codeWriter.writeLabel(localLabelCount);
@@ -219,7 +244,7 @@ public class CompilationEngine {
         labelCount++;
         eat("symbol");
         eat("symbol");
-        compileStatements(false);
+        compileStatements("normal");
         eat("symbol");
         if (tokenizer.tokenType() == Tokenizer.TokenType.KEYWORD && tokenizer.getToken().equals("else")) {
             codeWriter.writeGoto(labelCount + 1);
@@ -228,7 +253,7 @@ public class CompilationEngine {
             localLabelCount = labelCount;
             eat("keyword");
             eat("symbol");
-            compileStatements(false);
+            compileStatements("normal");
             eat("symbol");
         }
         codeWriter.writeLabel(localLabelCount);
@@ -248,14 +273,22 @@ public class CompilationEngine {
             String constant = eat("integerConstant");
             codeWriter.writePush("constant", Integer.parseInt(constant));
         } else if (tokenizer.tokenType() == Tokenizer.TokenType.STRING_CONST) {
-            eat("stringConstant");
+            String value = eat("stringConstant");
+            codeWriter.writePush("constant", value.length());
+            codeWriter.writeCall("String.new", 1);
+            for (int i = 1; i <= value.length(); i++) {
+                codeWriter.writePush("constant", value.charAt(i - 1));
+                codeWriter.writeCall("String.appendChar", 2);
+            }
         } else if (tokenizer.tokenType() == Tokenizer.TokenType.KEYWORD && (tokenizer.getToken().equals("true") || tokenizer.getToken().equals("false") || tokenizer.getToken().equals("null") || tokenizer.getToken().equals("this"))) {
             String value = eat("keyword");
             if (value.equals("true")) {
                 codeWriter.writePush("constant", 1);
                 codeWriter.writeArithmetic("neg");
-            } else if (value.equals("false")) {
+            } else if (value.equals("false") || value.equals("null")) {
                 codeWriter.writePush("constant", 0);
+            } else if (value.equals("this")) {
+                codeWriter.writePush("pointer", 0);
             }
         } else if (tokenizer.tokenType() == Tokenizer.TokenType.SYMBOL && tokenizer.getToken().equals("(")) {
             eat("symbol");
@@ -269,19 +302,29 @@ public class CompilationEngine {
             String name = "";
             name = eat("identifier");
             if (tokenizer.tokenType() == Tokenizer.TokenType.SYMBOL && tokenizer.getToken().equals("[")) {
+                codeWriter.writePush(symbolTable.kindOf(name), symbolTable.indexOf(name));
                 eat("symbol");
                 compileExpression();
                 eat("symbol");
+                codeWriter.writeArithmetic("add");
+                codeWriter.writePop("pointer", 1);
+                codeWriter.writePush("that", 0);
             } else if (tokenizer.tokenType() == Tokenizer.TokenType.SYMBOL && (tokenizer.getToken().equals(".") || tokenizer.getToken().equals("("))) {
+                int count = 0;
                 if (tokenizer.getToken().equals(".")) {
                     if (!symbolTable.kindOf(name).equals("undefined")) {
                         codeWriter.writePush(symbolTable.kindOf(name), symbolTable.indexOf(name));
+                        name = symbolTable.typeOf(name);
+                        count++;
                     }
                     name += eat("symbol");
                     name += eat("identifier");
+                } else {
+                    name = className + "." + name;
+                    count++;
                 }
                 eat("symbol");
-                int count = compileExpressionList();
+                count += compileExpressionList();
                 eat("symbol");
                 codeWriter.writeCall(name, count);
             } else {

@@ -26,11 +26,11 @@ public class SymbolTable {
 
     public void define(String name, String type, String kind) {
         if (kind.equals("static")) {
-            Object[] entity = {type, kind, staticCount};
+            Object[] entity = {type, "static", staticCount};
             classSymbolTable.put(name, entity);
             staticCount++;
         } else if (kind.equals("field")) {
-            Object[] entity = {type, kind, fieldCount};
+            Object[] entity = {type, "this", fieldCount};
             classSymbolTable.put(name, entity);
             fieldCount++;
         } else if (kind.equals("argument")) {
