@@ -1,0 +1,11 @@
+Here are some things that can speed up drawing:
+
+1) Use screen[offset] where screen=16384 is set in Screen.init(). Array accesses are much faster than calling peek/poke.
+
+2) If you didn't do so, write separate DrawHorizontalLine() and DrawVerticalLine() routines. Don't special case DrawLine() to handle those cases.
+
+3) Optimize DrawHorizontalLine() to draw the line 16 pixels at a time using word writes. You can do pixel writes for the start and end fragments, or better yet, create a set of bit masks in Screen.init() that you can use to AND or OR with the starting/ending words so the fragments are written with only two memory operations.
+
+4) DrawRectangle() calls DrawHorizontalLine() N times so there are N calculations of the starting and ending masks and starting and ending addresses for the word writes. Too much math going on here. Add a "repeat" parameter to DrawHorizontalLine() so it can do those calculations once and then do the drawing N times and all it needs to do to go to the next line is add 32 to the start and end addresses.
+
+5) Optimize DrawVerticalLine() to compute the address and mask for the first row, then loop the required number of times adding 32 to the address.
